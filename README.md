@@ -5,8 +5,8 @@
 Este projeto apresenta o desenvolvimento e o deploy de um modelo preditivo robusto para estimar o preço de venda de imóveis. O objetivo principal é transformar dados brutos em uma ferramenta de suporte à decisão de negócios, otimizando margens imobiliárias e reduzindo o tempo de avaliação manual de propriedades.
 
 A aplicação final foi implementada em produção e pode ser testada interativamente através do link acima.
+ 
 
----
 
 ## 🏢 1. O Problema de Negócio
 
