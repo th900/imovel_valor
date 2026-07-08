@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import numpy as np
 
 # 1. Configuração da página do Streamlit
 st.set_page_config(page_title="Preditor de Preços de Imóveis", page_icon="🏠", layout="centered")
@@ -9,22 +8,22 @@ st.set_page_config(page_title="Preditor de Preços de Imóveis", page_icon="🏠
 st.title("🏠 Precificação Inteligente de Imóveis")
 st.markdown("Insira as características do imóvel para calcular a estimativa de preço de venda via Machine Learning (CatBoost).")
 
-# 2. Carregar o modelo e as colunas salvas no Colab
+# 2. Carregar o modelo, as colunas e os valores padrão de treino
 @st.cache_resource
 def load_model_artifacts():
     model = joblib.load('modelo_imoveis_catboost.pkl')
     columns = joblib.load('colunas_modelo.pkl')
-    return model, columns
+    defaults = joblib.load('valores_padrao.pkl') # Carrega as medianas/modas de treino
+    return model, columns, defaults
 
 try:
-    model, model_columns = load_model_artifacts()
+    model, model_columns, valores_padrao = load_model_artifacts()
 except Exception as e:
-    st.error("Erro ao carregar os arquivos do modelo. Certifique-se de que 'modelo_imoveis_catboost.pkl' e 'colunas_modelo.pkl' estão na mesma pasta.")
+    st.error("Erro ao carregar os artefatos do modelo. Verifique se os arquivos .pkl estão no repositório.")
     st.stop()
 
-# 3. Criando a Interface de Usuário (Inputs) baseada nos insights da EDA
+# 3. Interface de Usuário (Inputs principais baseados na EDA)
 st.sidebar.header("📍 Localização")
-# Listamos alguns bairros principais do dataset (você pode adicionar mais se quiser)
 bairro_escolhido = st.sidebar.selectbox("Selecione o Bairro:", ["CollgCr", "Veenker", "Crawfor", "NoRidge", "Mitchel", "Somerst", "NridgHt", "OldTown", "BrkSide", "Sawyer", "NWAmes", "SawyerW", "IDOTRR", "MeadowV", "Edwards", "Timber", "Gilbert", "StoneBr", "ClearCr", "NPkVW", "Blmngtn", "BrDale", "SWISU", "Blueste"])
 
 st.subheader("📐 Dimensões e Qualidade")
@@ -46,36 +45,46 @@ with col4:
 with col5:
     tem_porao = st.checkbox("Possui Porão?")
 
-# 4. Processamento dos dados inseridos para o formato que o modelo espera
+# 4. Processamento dos dados
 if st.button("💰 Calcular Preço Estimado", type="primary"):
     
-    # Criamos um dicionário com os valores padrão zerados para TODAS as colunas que o modelo espera
-    input_data = {col: 0 for col in model_columns}
+    #  Cria a base de inputs usando as MEDIANAS de treino como padrão, e não ZERO!
+    # Cria um DataFrame vazio mapeando as colunas originais (antes do get_dummies)
+    df_base_original = pd.DataFrame([valores_padrao])
     
-    # Preenchemos as variáveis numéricas diretas
-    input_data['GrLivArea'] = gr_liv_area
-    input_data['TotalBsmtSF'] = total_bsmt_sf
-    input_data['OverallQual'] = overall_qual
-    input_data['YearBuilt'] = ano_construcao
-    input_data['YrSold'] = ano_venda
+    # Substituí os valores padrão do dicionário pelos valores que o usuário digitou na tela
+    df_base_original['GrLivArea'] = gr_liv_area
+    df_base_original['TotalBsmtSF'] = total_bsmt_sf
+    df_base_original['OverallQual'] = overall_qual
+    df_base_original['YearBuilt'] = ano_construcao
+    df_base_original['YrSold'] = ano_venda
+    df_base_original['Neighborhood'] = bairro_escolhido
     
-    # Engenharia de Features idêntica ao Colab
-    input_data['TotalSF'] = gr_liv_area + total_bsmt_sf
-    input_data['IdadeImovel'] = max(ano_venda - ano_construcao, 0)
-    input_data['HasPool'] = 1 if tem_piscina else 0
-    input_data['HasFireplace'] = 1 if tem_lareira else 0
-    input_data['HasBasement'] = 1 if tem_porao else 0
+    # Recriando a engenharia de features 
+    df_base_original['TotalSF'] = gr_liv_area + total_bsmt_sf
+    df_base_original['IdadeImovel'] = max(ano_venda - ano_construcao, 0)
+    df_base_original['HasPool'] = 1 if tem_piscina else 0
+    df_base_original['HasFireplace'] = 1 if tem_lareira else 0
+    df_base_original['HasBasement'] = 1 if tem_porao else 0
     
-    # Ativando a coluna correspondente ao One-Hot Encoding do Bairro (ex: Neighborhood_NoRidge = 1)
-    coluna_bairro = f"Neighborhood_{bairro_escolhido}"
-    if coluna_bairro in input_data:
-        input_data[coluna_bairro] = 1
-        
-    # Transforma em DataFrame com a ordem exata de colunas do modelo
-    df_input = pd.DataFrame([input_data])[model_columns]
+    # Aplicando o One-Hot Encoding na linha de input
+    df_encoded = pd.get_dummies(df_base_original)
     
-    # Executa a previsão
-    previsao = model.predict(df_input)[0]
+    # Criando o dicionário final com todas as colunas esperadas pelo modelo, inicializadas em 0
+    input_final = {col: 0 for col in model_columns}
     
-    # Exibe o resultado na tela de forma destacada
+    # Preenche o dicionário com os valores numéricos e os dummies gerados pelo get_dummies do input
+    for col in model_columns:
+        if col in df_encoded.columns:
+            input_final[col] = df_encoded[col].values[0]
+        elif col in df_base_original.columns:
+            # Caso a coluna numérica não tenha sofrido encoding (ex: LotArea), pega o valor padrão
+            input_final[col] = df_base_original[col].values[0]
+            
+    # Transforma no DataFrame final ordenado exatamente como o modelo espera
+    df_input_modelo = pd.DataFrame([input_final])[model_columns]
+    
+    # Executa a previsão com dados realistas e protegidos
+    previsao = model.predict(df_input_modelo)[0]
+    
     st.success(f"### Preço Estimado de Venda: **${previsao:,.2f}**")
