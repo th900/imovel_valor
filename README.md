@@ -40,11 +40,11 @@ Para garantir a robustez estatística e simular um ambiente de produção real, 
 
 Avaliamos múltiplos algoritmos utilizando **Validação Cruzada (K-Fold = 5)** com base na métrica **MAE (Erro Médio Absoluto)** para garantir estabilidade:
 
-* KNN Regressor -> MAE: \$27,996.68
-* Regressão Linear -> MAE: \$19,798.85
-* Random Forest -> MAE: \$17,512.30
-* Gradient Boosting -> MAE: \$16,325.62
-* **CatBoost Regressor -> MAE: \$14,583.98 (Vencedor)**
+* KNN Regressor -> MAE: \$27,944.34
+* Regressão Linear -> MAE: \$18,400.80
+* Random Forest -> MAE: \$16,799.93
+* Gradient Boosting -> MAE: \$15,430.78
+* **CatBoost Regressor -> MAE: \$13,909.13 (Vencedor)**
 
 ### Ajuste Fino de Hiperparâmetros
 O CatBoost foi submetido a um **GridSearchCV** para refinar seus pesos, encontrando a combinação ideal: `{'depth': 6, 'iterations': 1000, 'learning_rate': 0.03}`.
