@@ -1,24 +1,11 @@
 # 🏠 Precificação Inteligente de Imóveis com Machine Learning
 
-[![Streamlit App](https://static.streamlit.io/badge_svg.svg)](INSIRA_AQUI_O_LINK_DO_SEU_STREAMLIT)
-
-Este projeto apresenta o desenvolvimento e o deploy de um modelo preditivo robusto para estimar o preço de venda de imóveis. O objetivo principal é transformar dados brutos em uma ferramenta de suporte à decisão de negócios, otimizando margens imobiliárias e reduzindo o tempo de avaliação manual de propriedades.
-
-A aplicação final foi implementada em produção e pode ser testada interativamente através do link acima.
- 
-<<<<<<< HEAD
-# 🏠 Precificação Inteligente de Imóveis com Machine Learning
-
-[![Streamlit App](https://static.streamlit.io/badge_svg.svg)](INSIRA_AQUI_O_LINK_DO_SEU_STREAMLIT)
+[![Streamlit App](https://static.streamlit.io/badge_svg.svg)](https://imovelvalor-3jmdrw5gjn6xfnrup5pyfo.streamlit.app/)
 
 Este projeto apresenta o desenvolvimento e o deploy de um modelo preditivo robusto para estimar o preço de venda de imóveis. O objetivo principal é transformar dados brutos em uma ferramenta de suporte à decisão de negócios, otimizando margens imobiliárias e reduzindo o tempo de avaliação manual de propriedades.
 
 A aplicação final foi implementada em produção e pode ser testada interativamente através do link acima.
 
----
-=======
-
->>>>>>> 1549e102f366ed7780e4b78506ddf158fb44696c
 
 ## 🏢 1. O Problema de Negócio
 
