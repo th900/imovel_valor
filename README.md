@@ -71,8 +71,6 @@ Para mitigar a fragilidade do pipeline em produção, o script mapeia os inputs 
 ### Como rodar localmente:
 1. Clone o repositório.
 2. Instale as dependências: `pip install -r requisitos.txt`
-<<<<<<< HEAD
 3. Execute o app: `streamlit run app.py`
-=======
-3. Execute o app: `streamlit run app.py`
->>>>>>> 1549e102f366ed7780e4b78506ddf158fb44696c
+
+
