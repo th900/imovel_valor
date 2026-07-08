@@ -48,11 +48,10 @@ with col5:
 # 4. Processamento dos dados
 if st.button("💰 Calcular Preço Estimado", type="primary"):
     
-    #  Cria a base de inputs usando as MEDIANAS de treino como padrão, e não ZERO!
-    # Cria um DataFrame vazio mapeando as colunas originais (antes do get_dummies)
+    # Cria a base de inputs usando as MEDIANAS e MODAS de treino como padrão
     df_base_original = pd.DataFrame([valores_padrao])
     
-    # Substituí os valores padrão do dicionário pelos valores que o usuário digitou na tela
+    # Substituí as variáveis numéricas básicas do formulário
     df_base_original['GrLivArea'] = gr_liv_area
     df_base_original['TotalBsmtSF'] = total_bsmt_sf
     df_base_original['OverallQual'] = overall_qual
@@ -60,31 +59,58 @@ if st.button("💰 Calcular Preço Estimado", type="primary"):
     df_base_original['YrSold'] = ano_venda
     df_base_original['Neighborhood'] = bairro_escolhido
     
-    # Recriando a engenharia de features 
-    df_base_original['TotalSF'] = gr_liv_area + total_bsmt_sf
-    df_base_original['IdadeImovel'] = max(ano_venda - ano_construcao, 0)
-    df_base_original['HasPool'] = 1 if tem_piscina else 0
-    df_base_original['HasFireplace'] = 1 if tem_lareira else 0
-    df_base_original['HasBasement'] = 1 if tem_porao else 0
+    if tem_piscina:
+        df_base_original['HasPool'] = 1
+        df_base_original['PoolQC'] = 'Gd'       
+        df_base_original['PoolArea'] = 500       
+    else:
+        df_base_original['HasPool'] = 0
+        df_base_original['PoolQC'] = 'None'
+        df_base_original['PoolArea'] = 0
+
+    if tem_lareira:
+        df_base_original['HasFireplace'] = 1
+        df_base_original['Fireplaces'] = max(valores_padrao.get('Fireplaces', 1), 1)
+        df_base_original['FireplaceQu'] = 'Gd' 
+    else:
+        df_base_original['HasFireplace'] = 0
+        df_base_original['Fireplaces'] = 0
+        df_base_original['FireplaceQu'] = 'None'
+
+    if tem_porao:
+        df_base_original['HasBasement'] = 1
+        df_base_original['TotalBsmtSF'] = total_bsmt_sf if total_bsmt_sf > 0 else valores_padrao.get('TotalBsmtSF', 1000)
+        df_base_original['BsmtQual'] = 'TA'      
+        df_base_original['BsmtCond'] = 'TA'
+    else:
+        df_base_original['HasBasement'] = 0
+        df_base_original['TotalBsmtSF'] = 0      
+        df_base_original['BsmtQual'] = 'None'
+        df_base_original['BsmtCond'] = 'None'
+        
+    # Recriando as features agregadas do notebook com os dados já alinhados
+    df_base_original['TotalSF'] = df_base_original['GrLivArea'] + df_base_original['TotalBsmtSF']
+    df_base_original['IdadeImovel'] = max(df_base_original['YrSold'].values[0] - df_base_original['YearBuilt'].values[0], 0)
     
-    # Aplicando o One-Hot Encoding na linha de input
+    # ------------------------------------------------------------------------
+
+    # Aplicando o One-Hot Encoding na nossa linha de input corrigida
     df_encoded = pd.get_dummies(df_base_original)
     
     # Criando o dicionário final com todas as colunas esperadas pelo modelo, inicializadas em 0
     input_final = {col: 0 for col in model_columns}
     
-    # Preenche o dicionário com os valores numéricos e os dummies gerados pelo get_dummies do input
+    # Preenchemos o dicionário com os valores numéricos e os dummies gerados
     for col in model_columns:
         if col in df_encoded.columns:
             input_final[col] = df_encoded[col].values[0]
         elif col in df_base_original.columns:
-            # Caso a coluna numérica não tenha sofrido encoding (ex: LotArea), pega o valor padrão
             input_final[col] = df_base_original[col].values[0]
             
     # Transforma no DataFrame final ordenado exatamente como o modelo espera
     df_input_modelo = pd.DataFrame([input_final])[model_columns]
     
-    # Executa a previsão com dados realistas e protegidos
+    # Executa a previsão sem contradições lógicas
     previsao = model.predict(df_input_modelo)[0]
     
     st.success(f"### Preço Estimado de Venda: **${previsao:,.2f}**")
